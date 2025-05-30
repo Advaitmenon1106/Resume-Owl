@@ -1,0 +1,10 @@
+google-genai
+langchain
+langgraph
+numpy
+pandas
+pillow
+pdf2image
+python-dotenv
+qdrant-client
+requests
