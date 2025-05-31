@@ -10,6 +10,8 @@ import yaml
 import base64
 from io import BytesIO
 import asyncio
+import json
+import re
 
 load_dotenv()
 
@@ -110,10 +112,27 @@ async def convert_images_to_markdown(image_array: list[Image.Image]):
 async def page_image_to_md(fp):
     images_array = chunk_pdf_to_images(fp)
     md_pages = await convert_images_to_markdown(images_array)
-    pg_no_to_md_mapping = {i:md_pages[i-1] for i in range(1, len(images_array)+1)}
+    return md_pages
 
-    return pg_no_to_md_mapping
 
-# if __name__ == "__main__":
-#     res= asyncio.run(page_image_to_md('sample_inputs/Advait-Menon_May_2025_Resume.docx'))
-#     print(res)
+def clean_and_parse_json(llm_output):
+    # Remove Markdown fences if they exist
+    cleaned = re.sub(r"^```json\s*|\s*```$", "", llm_output.strip(), flags=re.MULTILINE)
+    return json.loads(cleaned)
+
+
+if __name__ == "__main__":
+    res = asyncio.run(page_image_to_md('sample_inputs/Advait-Menon_May_2025_Resume.docx'))
+    
+    # Handle multiple chunks
+    parsed = []
+    if isinstance(res, list):
+        for item in res:
+            parsed.append(clean_and_parse_json(item))
+    else:
+        parsed = clean_and_parse_json(res)
+
+    print(json.dumps(parsed, indent=2))
+    
+    with open('output.json', 'w') as f:
+        json.dump(parsed, f, indent=2)
