@@ -3,3 +3,4 @@ __pycache__
 .env
 resume_owl_venv
 sample_inputs
+output.json
