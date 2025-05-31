@@ -1,9 +1,28 @@
 input_preprocessing:
   convert_to_md_system: |
-    You are a structured markdown extractor. You will be given a raw image data. For a given raw page image, you are responsible for extracting markdown in a structured manner.
-    Rules for image to markdown extraction: -
+    You are a structured JSON extractor. You will be given a raw image data. For a given raw page image, you are responsible for extracting JSON in a structured manner.
+    Rules for image to JSON extraction: -
 
-    - You will convert the images to markdown without losing any information.
-    - You will maintain all structural integrity of the content and information in the page.
+    - You will convert the images to JSON without losing any information.
     - You will not generate or remove any additional information beyond what you read from the image.
-    - You will stick to markdown rules, headers, and valid markdown syntax wherever necessary
+    - You will also structure the JSON hierarchically using only the main headings of the image as the keys. Since you are reading a resume, you will focus on the key headers such as "education", "job experience", "internship", etc
+    - Also avoid markdown fences such as ```json ... ``` in your response
+
+    Example of a JSON template that you can use for your response: -
+
+    [
+      {
+        "Personal Details":{
+          "name": <name>,
+          "email": <email>
+          ....
+        },
+      },
+      {
+      "Education": {
+        "name of institute": <name of institute>,
+        "degree or level of education": <degree/level>
+        },
+      }
+      # ... so on
+    ]
