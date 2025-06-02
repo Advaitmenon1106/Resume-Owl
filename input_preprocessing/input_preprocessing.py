@@ -19,10 +19,12 @@ with open('prompts.yml', 'r') as f:
     prompts = yaml.safe_load(f)
     prompts = prompts['input_preprocessing']
 
+
 def pil_to_base64(image: Image.Image, format: str = "PNG") -> str:
     buffered = BytesIO()
     image.save(buffered, format=format)
     return base64.b64encode(buffered.getvalue()).decode("utf-8")
+
 
 def document_to_pdf(input_fp):
     GOTENBERG_URL = os.environ['GOTENBERG_URL']
@@ -84,20 +86,29 @@ async def send_image_to_gemini(img: Image.Image):
     b64_image = pil_to_base64(img)
 
     def _call_generate():
-        return client.models.generate_content(
-            model='gemini-2.0-flash',
-            config=types.GenerateContentConfig(system_instruction=prompts['convert_to_md_system']),
-            contents=[
-                types.Part.from_bytes(data=b64_image, mime_type='image/jpeg')
-            ]
-        )
+        try:
+            return client.models.generate_content(
+                model='gemini-2.0-flash',
+                config=types.GenerateContentConfig(system_instruction=prompts['convert_to_md_system']),
+                contents=[
+                    types.Part.from_bytes(data=b64_image, mime_type='image/jpeg')
+                ]
+            )
+        except:
+            return client.models.generate_content(
+                model='gemini-1.5-flash',
+                config=types.GenerateContentConfig(system_instruction=prompts['convert_to_md_system']),
+                contents=[
+                    types.Part.from_bytes(data=b64_image, mime_type='image/jpeg')
+                ]
+            )
 
     response = await asyncio.to_thread(_call_generate)
     await asyncio.sleep(10)
     return response.text
 
 
-async def convert_images_to_markdown(image_array: list[Image.Image]):
+async def convert_images_to_json(image_array: list[Image.Image]):
     semaphore = asyncio.Semaphore(5)
 
     async def limited_task(img):
@@ -109,9 +120,9 @@ async def convert_images_to_markdown(image_array: list[Image.Image]):
     return await asyncio.gather(*tasks)
 
 
-async def page_image_to_md(fp):
+async def page_image_to_json(fp):
     images_array = chunk_pdf_to_images(fp)
-    md_pages = await convert_images_to_markdown(images_array)
+    md_pages = await convert_images_to_json(images_array)
     return md_pages
 
 
@@ -121,8 +132,8 @@ def clean_and_parse_json(llm_output):
     return json.loads(cleaned)
 
 
-if __name__ == "__main__":
-    res = asyncio.run(page_image_to_md('sample_inputs/Advait-Menon_May_2025_Resume.docx'))
+def convert_resume_to_json():
+    res = asyncio.run(page_image_to_json('sample_inputs/Advait-Menon_May_2025_Resume.docx'))
     
     # Handle multiple chunks
     parsed = []
@@ -132,7 +143,14 @@ if __name__ == "__main__":
     else:
         parsed = clean_and_parse_json(res)
 
-    print(json.dumps(parsed, indent=2))
-    
+    final_json = parsed[0]
+    final_json.extend(parsed[1:])
+
     with open('output.json', 'w') as f:
         json.dump(parsed, f, indent=2)
+    
+    return final_json
+
+
+j_dict = convert_resume_to_json()
+print(j_dict)
