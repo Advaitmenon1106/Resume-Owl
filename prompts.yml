@@ -6,7 +6,6 @@ input_preprocessing:
     - You will convert the images to JSON without losing any information.
     - You will not generate or remove any additional information beyond what you read from the image.
     - You will also structure the JSON hierarchically using only the main headings of the image as the keys. Since you are reading a resume, you will focus on the key headers such as "education", "job experience", "internship", etc
-    - Also avoid markdown fences such as ```json ... ``` in your response
 
     Example of a JSON template that you can use for your response: -
 
