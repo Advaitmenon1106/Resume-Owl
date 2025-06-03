@@ -12,6 +12,7 @@ from io import BytesIO
 import asyncio
 import json
 import re
+import pandas as pd
 
 load_dotenv()
 
@@ -132,8 +133,8 @@ def clean_and_parse_json(llm_output):
     return json.loads(cleaned)
 
 
-def convert_resume_to_json():
-    res = asyncio.run(page_image_to_json('sample_inputs/Advait-Menon_May_2025_Resume.docx'))
+def convert_resume_to_json(fp):
+    res = asyncio.run(page_image_to_json(fp))
     
     # Handle multiple chunks
     parsed = []
@@ -152,5 +153,8 @@ def convert_resume_to_json():
     return final_json
 
 
-j_dict = convert_resume_to_json()
-print(j_dict)
+def convert_csv_to_json(fp):
+    return pd.read_csv(fp).to_dict(orient='records')
+
+with open('sample_inputs/jobs_json.json', 'w') as f:
+    json.dump(convert_csv_to_json('sample_inputs/job_descriptions.csv'), f, indent=2)
