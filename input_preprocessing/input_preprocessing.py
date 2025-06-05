@@ -77,6 +77,7 @@ def chunk_pdf_to_images(input_fp):
     process_input(input_fp) # os.environ['OUTPUT_PDF_PATH'] is defined here
 
     page_images = pdf2image.convert_from_path(os.environ['OUTPUT_PDF_PATH'])
+    os.remove(os.environ['OUTPUT_PDF_PATH'])
 
     return page_images
 
