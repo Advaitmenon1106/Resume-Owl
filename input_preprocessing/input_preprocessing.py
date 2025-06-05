@@ -4,8 +4,6 @@ import os
 from dotenv import load_dotenv
 import pdf2image
 from PIL import Image
-from google import genai
-from google.genai import types
 import yaml
 import base64
 from io import BytesIO
@@ -13,6 +11,7 @@ import asyncio
 import json
 import re
 import pandas as pd
+from mistralai import Mistral
 
 load_dotenv()
 
@@ -81,43 +80,39 @@ def chunk_pdf_to_images(input_fp):
 
     return page_images
 
+async def send_image_to_mistral(images: list[Image.Image]):
+    llm = Mistral(os.environ['MISTRAL_API_KEY'])
+    model = "pixtral-12b-2409"
 
-async def send_image_to_gemini(img: Image.Image):
-    client = genai.Client(api_key=os.environ['GEMINI_API_KEY'])
-    b64_image = pil_to_base64(img)
+    content = [{"type": "text", "text": prompts["convert_to_md_system"]}]
+    for img in images:
+        b64_img = pil_to_base64(img, format="JPEG")
+        content.append({
+            "type": "image_url",
+            "image_url": f"data:image/jpeg;base64,{b64_img}"
+        })
 
-    def _call_generate():
-        try:
-            return client.models.generate_content(
-                model='gemini-2.0-flash',
-                config=types.GenerateContentConfig(system_instruction=prompts['convert_to_md_system']),
-                contents=[
-                    types.Part.from_bytes(data=b64_image, mime_type='image/jpeg')
-                ]
-            )
-        except:
-            return client.models.generate_content(
-                model='gemini-1.5-flash',
-                config=types.GenerateContentConfig(system_instruction=prompts['convert_to_md_system']),
-                contents=[
-                    types.Part.from_bytes(data=b64_image, mime_type='image/jpeg')
-                ]
-            )
+    messages = [{"role": "user", "content": content}]
 
-    response = await asyncio.to_thread(_call_generate)
-    await asyncio.sleep(10)
-    return response.text
+    response = await asyncio.to_thread(
+        lambda: llm.chat.complete(model=model, messages=messages)
+    )
+
+    return response.choices[0].message.content
 
 
-async def convert_images_to_json(image_array: list[Image.Image]):
+async def convert_images_to_json(image_array: list[Image.Image], batch_size: int = 3):
     semaphore = asyncio.Semaphore(5)
 
-    async def limited_task(img):
+    def chunks(lst, size):
+        for i in range(0, len(lst), size):
+            yield lst[i:i + size]
+
+    async def limited_task(image_batch):
         async with semaphore:
-            return await send_image_to_gemini(img)
+            return await send_image_to_mistral(image_batch)
 
-    tasks = [limited_task(img) for img in image_array]
-
+    tasks = [limited_task(batch) for batch in chunks(image_array, batch_size)]
     return await asyncio.gather(*tasks)
 
 
@@ -154,7 +149,7 @@ def convert_resume_to_json(fp):
 
 
 def convert_csv_to_json(fp):
-    return pd.read_csv(fp).to_dict(orient='records')
+    return pd.read_csv(fp, nrows=1000).to_dict(orient='records')
 
-with open('sample_inputs/jobs_json.json', 'w') as f:
-    json.dump(convert_csv_to_json('sample_inputs/job_descriptions.csv'), f, indent=2)
+# with open('sample_inputs/jobs_json.json', 'w') as f:
+#     json.dump(convert_csv_to_json('sample_inputs/job_descriptions.csv'), f, indent=2)
