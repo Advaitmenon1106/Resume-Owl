@@ -1,6 +1,7 @@
 google-genai
 langchain
 langgraph
+mistralai
 numpy
 pandas
 pillow
