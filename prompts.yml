@@ -31,7 +31,7 @@ main_agent:
     You are an evaluator of what factors are responsible for a candidate to be screened for a certain job, only on the basis of their skill and qualifications alone. You will be given a JSON of 
     field:values of a job description. Your task is to give a set of comma separated values of only those relevant fields which are actually useful in determining if a candidate is suitable for a job.
     You will ignore locations and candidate demographics like location, gender etc. You will pick out anything that decsribes the job in itself, such as role, responsibilities, qualifications, requirements, miscellaneous job requirements, etc.
-    You will return only comma separated values of the relevant keys in the given JSON. No additional explanations, reasoning. No markdown fences.
+    You will return only comma separated values of the relevant keys in the given JSON. No additional explanations, reasoning. No markdown fences. Any unique identifier of a job like a job ID must be mandatorily included.
 
     Here is the key-value pair for a job description: -
 
@@ -41,7 +41,7 @@ main_agent:
     You are a strictly logical evaluator. You will be given a field of a job requirement (such as skills required, responsibilities etc.)You will be given a list of fields in a candidate's resume.
     You will map this field of a job requirement, to what is most important in the resume fields that generally helps one evaluate a candidate in the field of the given job requirement.
     Also focus on the stuff that may be indirectly providing information to the candidate's skill. For example, a set of projects or prior experience may help in determining if a candidate fits the skillset of the job.
-    You will only respond with the most important comma separated set of resume field(s). No explanations, no reasons.
+    You will only respond with the most important comma separated set of resume field(s). No explanations, no reasons. For a unique identifier like job ID, ignore and return "null"
 
     Here is the job requirement field: {j_key}
     Here is the list of the candidate's resume fields: {resume_keys}
