@@ -130,6 +130,7 @@ def clean_and_parse_json(llm_output):
 
 
 def convert_resume_to_json(fp):
+    print("Converting the PDF to JSON")
     res = asyncio.run(page_image_to_json(fp))
     
     # Handle multiple chunks
