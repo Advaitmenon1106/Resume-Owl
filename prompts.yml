@@ -26,7 +26,7 @@ input_preprocessing:
       # ... so on
     ]
 
-main_agent:
+preprocessing_agent:
   relevant_job_field_extractor: |
     You are an evaluator of what factors are responsible for a candidate to be screened for a certain job, only on the basis of their skill and qualifications alone. You will be given a JSON of 
     field:values of a job description. Your task is to give a set of comma separated values of only those relevant fields which are actually useful in determining if a candidate is suitable for a job.
@@ -45,3 +45,17 @@ main_agent:
 
     Here is the job requirement field: {j_key}
     Here is the list of the candidate's resume fields: {resume_keys}
+  
+strategy_agent:
+  strategy_generator: |
+    You will be given a set of mappings. The keys of this mapping correspond to the factors in a job description. The values map to the different features of a candidate's resume.
+    I want you to come up with a single strategy in natural language, that helps use one of these key-values to filter out what we need from the dataset of job descriptions. No other explanations, no reasoning
+    mappings: {mappings}
+  
+  uniqueness_check: |
+    You will evaluate if the given strategy is logically and semantically similar to any one out of the set of existing strategies given to you. You will only return a "yes" or a "no".
+    If the given strategy means the same as ATLEAST one strategy in the given list, you will respond with a "yes". If none of the existing strategies are similar to the given strategy, you will respond with a "no"
+    No explanations, no reasoning or markdown fences.
+
+    Given strategy: {current_strategy}
+    Existing Strategies: {existing_strategies}
