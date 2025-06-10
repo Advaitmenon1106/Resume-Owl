@@ -12,7 +12,7 @@ load_dotenv()
 
 with open('prompts.yml') as f:
     prompts = yaml.safe_load(f)
-    prompts = prompts['main_agent']
+    prompts = prompts['preprocessing_agent']
 
 
 async def prompt_mistral(prompt_text):
