@@ -81,6 +81,7 @@ def chunk_pdf_to_images(input_fp):
 
     return page_images
 
+
 async def send_image_to_mistral(images: list[Image.Image]):
     llm = Mistral(os.environ['MISTRAL_API_KEY'])
     model = "pixtral-12b-2409"
