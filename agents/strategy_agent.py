@@ -1,28 +1,17 @@
-import asyncio
-from typing_extensions import TypedDict, Any
+from typing_extensions import TypedDict
 from langgraph.graph import StateGraph
 from mistralai import Mistral
 import os
 from dotenv import load_dotenv
 import yaml
 from scipy.spatial.distance import cosine
+from utils import prompt_mistral
 load_dotenv()
+
 
 with open('prompts.yml', 'r') as f:
     prompts = yaml.safe_load(f)
     prompts = prompts['strategy_agent']
-
-
-async def prompt_mistral(prompt_text):
-    client = Mistral(api_key=os.environ['MISTRAL_API_KEY'])
-    messages = [{"role": "user", "content": prompt_text}]
-    model = "mistral-large-latest"
-
-    def sync_call():
-        return client.chat.complete(model=model, messages=messages, temperature=0)
-    
-    response = await asyncio.to_thread(sync_call)
-    return response.choices[0].message.content
 
 
 def fetch_embedding_creator():
@@ -41,11 +30,13 @@ class AgentState(TypedDict):
     is_repeated_strategy: bool
 
 
-def state_initializer(current_nl_strategy:str, mapped_resume_fields_to_job_fields:dict):
+def state_initializer_strategy_agent(mapped_resume_fields_to_job_fields:dict):
     state:AgentState = {
-        'current_nl_strategy': current_nl_strategy,
-        'mapped_resume_fields_to_job_fields': mapped_resume_fields_to_job_fields
+        'mapped_resume_fields_to_job_fields': mapped_resume_fields_to_job_fields,
+        'past_strategies': {}
     }
+
+    return state
 
 async def orchestrator(state:AgentState):
     state['is_repeated_strategy'] = None
@@ -53,13 +44,17 @@ async def orchestrator(state:AgentState):
 
 async def strategy_generator(state:AgentState):
     llm_prompt = prompts['strategy_generator']
-    current_nl_strategy = prompt_mistral(llm_prompt.format(mappings = state['mapped_resume_fields_to_job_fields']))
+    current_nl_strategy = await prompt_mistral(llm_prompt.format(mappings = state['mapped_resume_fields_to_job_fields']))
 
     state['current_nl_strategy'] = current_nl_strategy
 
     return state
 
 async def uniqueness_check(state:AgentState):
+    if not state['past_strategies']:
+        state['is_repeated_strategy']=False
+        return state
+    
     llm_prompt = prompts['uniqueness_check']
     current_nl_strategy = state['current_nl_strategy']
     past_strategies = state['past_strategies'].keys()
@@ -74,7 +69,7 @@ async def uniqueness_check(state:AgentState):
 
     top_strategy_matches = [i for i, _ in sorted_cosine_similarities[:3]]
 
-    repeated_or_not = prompt_mistral(llm_prompt.format(current_strategy=current_nl_strategy, existing_strategies=top_strategy_matches))
+    repeated_or_not = await prompt_mistral(llm_prompt.format(current_strategy=current_nl_strategy, existing_strategies=top_strategy_matches))
 
     if "yes" in repeated_or_not.lower():
         state['is_repeated_strategy'] = True
@@ -84,3 +79,19 @@ async def uniqueness_check(state:AgentState):
         return state
 
 
+def build_strategy_agent():
+    graph = StateGraph(AgentState)
+
+    graph.add_node('orchestrator', orchestrator)
+    graph.add_node('strategy_generator', strategy_generator)
+    graph.add_node('uniqueness_check', uniqueness_check)
+    
+    graph.add_edge('orchestrator', 'strategy_generator')
+    graph.add_edge('strategy_generator', 'uniqueness_check')
+
+    graph.set_entry_point('orchestrator')
+
+    agent = graph.compile()
+
+    return agent
+    
