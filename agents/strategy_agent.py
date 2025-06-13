@@ -5,18 +5,13 @@ import os
 from dotenv import load_dotenv
 import yaml
 from scipy.spatial.distance import cosine
-from utils import prompt_mistral
+from utils import prompt_mistral, fetch_embedding_creator
 load_dotenv()
 
 
 with open('prompts.yml', 'r') as f:
     prompts = yaml.safe_load(f)
     prompts = prompts['strategy_agent']
-
-
-def fetch_embedding_creator():
-    client = Mistral(api_key=os.environ['MISTRAL_API_KEY'])
-    return client.embeddings.create
 
 
 def calculate_cosine(e1, e2):
@@ -61,8 +56,8 @@ async def uniqueness_check(state:AgentState):
 
     model = "mistral-embed"
 
-    current_nl_strategy_embeddings = fetch_embedding_creator(model=model, inputs=current_nl_strategy).data[0].embedding
-    past_strategies_embeddings = {i: fetch_embedding_creator(model=model, inputs=i).data[0].embedding for i in past_strategies}
+    current_nl_strategy_embeddings = fetch_embedding_creator(inputs=current_nl_strategy).data[0].embedding
+    past_strategies_embeddings = {i: fetch_embedding_creator(inputs=i).data[0].embedding for i in past_strategies}
 
     cosine_similarities = {i: cosine(current_nl_strategy_embeddings, past_strategies_embeddings[i]) for i in past_strategies_embeddings.keys()}
     sorted_cosine_similarities = sorted(cosine_similarities.items(), key=lambda x: x[1], reverse=True)
