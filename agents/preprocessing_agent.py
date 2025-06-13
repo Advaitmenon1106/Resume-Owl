@@ -55,16 +55,9 @@ async def resumeKeys_to_jobKeys_mapper(state:AgentState):
 
     mapped_resume_fields_to_job_fields = {}
 
-    # for j_key in job_keys:
-    #     await asyncio.sleep(2.0)
-    #     imp_fields_cs = await prompt_mistral(input_prompt.format(j_key=j_key, resume_keys=resume_keys))
-    #     imp_fields = imp_fields_cs.strip().split(',')
-    #     imp_fields = [i.strip() for i in imp_fields]
-
-    #     mapped_resume_fields_to_job_fields[j_key] = imp_fields
-
     json_mappings = await prompt_mistral(prompt_text=input_prompt.format(job_keys=job_keys, resume_keys=resume_keys))
-    mapped_resume_fields_to_job_fields = json.dumps(json_mappings)
+    json_mappings = json_mappings.strip("'").strip('"').strip('```').strip('json')
+    mapped_resume_fields_to_job_fields = json.loads(json_mappings)
     
     state['mapped_resume_fields_to_job_fields'] = mapped_resume_fields_to_job_fields
     return state
