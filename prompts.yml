@@ -47,7 +47,8 @@ preprocessing_agent:
 strategy_agent:
   strategy_generator: |
     You will be given a set of mappings. The keys of this mapping correspond to the factors in a job description. The values map to the different features of a candidate's resume.
-    I want you to come up with a single strategy in natural language, that helps use one of these key-values to filter out what we need from the dataset of job descriptions. No other explanations, no reasoning
+    I want you to come up with a single, crisp strategy in natural language, that helps use one of these key-values to filter out what we need from the dataset of job descriptions. No other explanations, no reasoning.
+    We have access to LLMs and trained embedders both.
     mappings: {mappings}
   
   uniqueness_check: |
@@ -57,3 +58,11 @@ strategy_agent:
 
     Given strategy: {current_strategy}
     Existing Strategies: {existing_strategies}
+
+strategy_executor:
+  execute_strategy: |
+   Given a strategy, a set of tools (python functions and its respective pre-requisite), a JSON mapping a single field of a job requirement (all job descriptions (JD) stored as a list[json], tbe keys of a single JD are the keys of the mapper) to multiple fields of a resume (resume fields are keys in the resume JSON, these keys are the values assigned to each JD key based on relevance),
+   execute this strategy using a python code by using the tools, state['jobs_json'], state['resume_json'] (you're working within an agentic AI, state is the app's state variables). You can build anything you want, even a RAG system if needed, as long as you use the right syntax. Do not return anything other than runnable python code. don't forget to index both the Jobs list[dict] and resume dict using the exact names in the mapper
+
+   tools: {tools},
+   job_field_to_resume_mapper: {mapped_resume_fields_to_job_fields}
