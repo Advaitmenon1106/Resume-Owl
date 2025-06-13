@@ -46,3 +46,7 @@ async def prompt_mistral(prompt_text):
     except Exception as e:
         print("Error from Mistral:", e)
         raise
+
+def fetch_embedding_creator(inputs, model='mistral-embed'):
+    client = Mistral(api_key=os.environ['MISTRAL_API_KEY'])
+    return client.embeddings.create(model=model, inputs=inputs)
