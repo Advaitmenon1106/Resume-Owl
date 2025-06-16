@@ -144,6 +144,8 @@ def convert_resume_to_json(fp):
 
     final_json = parsed[0]
     final_json.extend(parsed[1:])
+    print(final_json[0])
+    final_json = {k: v for d in final_json for k, v in d.items()}
 
     with open('output.json', 'w') as f:
         json.dump(parsed, f, indent=2)
