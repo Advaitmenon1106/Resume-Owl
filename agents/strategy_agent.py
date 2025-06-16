@@ -5,7 +5,7 @@ import os
 from dotenv import load_dotenv
 import yaml
 from scipy.spatial.distance import cosine
-from utils import prompt_mistral, fetch_embedding_creator
+from utils import prompt_mistral, prompt_gemini, fetch_embedding_creator
 load_dotenv()
 
 
@@ -39,7 +39,7 @@ async def orchestrator(state:AgentState):
 
 async def strategy_generator(state:AgentState):
     llm_prompt = prompts['strategy_generator']
-    current_nl_strategy = await prompt_mistral(llm_prompt.format(mappings = state['mapped_resume_fields_to_job_fields']))
+    current_nl_strategy = await prompt_gemini(llm_prompt.format(mappings = state['mapped_resume_fields_to_job_fields']))
 
     state['current_nl_strategy'] = current_nl_strategy
 
@@ -53,8 +53,6 @@ async def uniqueness_check(state:AgentState):
     llm_prompt = prompts['uniqueness_check']
     current_nl_strategy = state['current_nl_strategy']
     past_strategies = state['past_strategies'].keys()
-
-    model = "mistral-embed"
 
     current_nl_strategy_embeddings = fetch_embedding_creator(inputs=current_nl_strategy).data[0].embedding
     past_strategies_embeddings = {i: fetch_embedding_creator(inputs=i).data[0].embedding for i in past_strategies}
