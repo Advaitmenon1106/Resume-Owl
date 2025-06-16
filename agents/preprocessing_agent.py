@@ -51,7 +51,7 @@ async def resumeKeys_to_jobKeys_mapper(state:AgentState):
     input_prompt = prompts['resumeKeys_to_jobKeys_mapper']
 
     for i in state['resume_json']:
-        resume_keys.append(list(i.keys())[0])
+        resume_keys.append(list(i))
 
     mapped_resume_fields_to_job_fields = {}
 
