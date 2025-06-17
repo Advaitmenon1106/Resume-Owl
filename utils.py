@@ -49,4 +49,5 @@ async def prompt_mistral(prompt_text):
 
 def fetch_embedding_creator(inputs, model='mistral-embed'):
     client = Mistral(api_key=os.environ['MISTRAL_API_KEY'])
-    return client.embeddings.create(model=model, inputs=inputs)
+    response = client.embeddings.create(model=model, inputs=inputs)
+    return [item.embedding for item in response.data]
